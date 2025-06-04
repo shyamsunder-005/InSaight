@@ -30,18 +30,6 @@ CREATE TABLE organisation (
     active      BOOLEAN DEFAULT TRUE
 );
 
----
-
-
-CREATE TABLE codeable_concept ( -- like look up table
-  concept_type VARCHAR(50) NOT NULL,              -- E.g., 'maritalStatus', 'identifier.type', 'relationship'
-  `code` VARCHAR(32) NOT NULL,                    -- E.g., 'M'
-  `system` VARCHAR(255),                 -- E.g., 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus'
-  display VARCHAR(255),                  -- E.g., 'Married'
-  `text` VARCHAR(255),                   -- Optional free text if provided
-  PRIMARY KEY (concept_type, `code`)       -- Composite primary key
-);
-
 
 -- Patient Table ---
 CREATE TABLE patient (

@@ -1,6 +1,7 @@
 -- Encounter table --
 -- An interaction during which services are provided to the patient
 -- a specific interaction, like a hospital visit, consultation, or surgery.
+use insaights_db;
 
 CREATE TABLE codeable_concept ( -- like look up table, centralised or decentralised
   concept_type VARCHAR(50) NOT NULL,        -- encounter status,Act-priority      
@@ -11,10 +12,39 @@ CREATE TABLE codeable_concept ( -- like look up table, centralised or decentrali
   PRIMARY KEY (concept_type, `code`)       -- Composite primary key
 );
 
+CREATE TABLE `group` ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE episode_of_care ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE care_team ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE appointment ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE `account` ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+CREATE TABLE location ( --  for reference only not permanent
+	id  VARCHAR(64) PRIMARY KEY
+);
+
+
+
+
+
+
 
 CREATE TABLE encounter (
     id                      VARCHAR(64) NOT NULL PRIMARY KEY, -- uuid
-    `status`                  VARCHAR(20) NOT NULL, -- status of the vist (planned,in-progress	,on-hold etc)
+    `status`                VARCHAR(20) NOT NULL, -- status of the vist (planned,in-progress	,on-hold etc)
     priority_code           VARCHAR(32), -- like A -for ASAP,R-routine service
     
     subject_patient_id      VARCHAR(64), -- The patient or group related to this encounter fk of patient resource
@@ -32,38 +62,40 @@ CREATE TABLE encounter (
 
     length_quantity         INT, --  how long the encounter lasted 
     length_unit             VARCHAR(20), -- unit like minu or hrs
+    
+    triage_temp				FLOAT, -- Temperature at triage (C)
+    triage_hr				FLOAT, -- Heart rate at triage (bpm)
+    triage_rr				FLOAT, -- Respiratory rate at triage (breaths per min.)
+    triage_spo2				FLOAT, -- Oxygen saturation at triage (%)
+    triage_sbp				FLOAT, -- Systolic blood pressure at triage (mmHg)
+    triage_dbp				FlOAT, -- Diastolic blood pressure at triage (mmHg)
+    triage_acuity			VARCHAR(32), -- Emergency Severity Index (ESI) at triage (1-5)
+    
+	class_code      		VARCHAR(32),  -- Classification of patient encounter context - e.g. Inpatient, outpatient,virtual,home health
 
     CONSTRAINT fk_encounter_subject_patient FOREIGN KEY (subject_patient_id) REFERENCES patient(id),
     CONSTRAINT fk_encounter_subject_group FOREIGN KEY (subject_group_id) REFERENCES `group`(id),
     CONSTRAINT fk_encounter_part_of FOREIGN KEY (part_of_encounter_id) REFERENCES encounter(id),
-    CONSTRAINT fk_encounter_service_provider FOREIGN KEY (service_provider_org_id) REFERENCES organization(id)
+    CONSTRAINT fk_encounter_service_provider FOREIGN KEY (service_provider_org_id) REFERENCES organisation(id)
 );
 
 CREATE TABLE encounter_identifier ( -- Medical record number ,insurance
-    id                 INT AUTO_INCREMENT PRIMARY KEY,
-    encounter_id       VARCHAR(64) NOT NULL,
-    `use`                VARCHAR(32), -- ('usual', 'official', 'temp', 'secondary', 'old'),
-    type_code          VARCHAR(32),
-    `system`             VARCHAR(255),
-    `value`              VARCHAR(255),
-    period_start       DATETIME,
-    period_end         DATETIME,
-    assigner_id INT,
+    id                 	INT AUTO_INCREMENT PRIMARY KEY,
+    encounter_id       	VARCHAR(64) NOT NULL,
+    `use`               VARCHAR(32), -- ('usual', 'official', 'temp', 'secondary', 'old'),
+    type_code          	VARCHAR(32),
+    `system`            VARCHAR(255),
+    `value`             VARCHAR(255),
+    period_start       	DATETIME,
+    period_end         	DATETIME,
+    assigner_id 		VARCHAR(64),
 
     CONSTRAINT fk_encounter_identifier_encounter FOREIGN KEY (encounter_id) REFERENCES encounter(id),
     CONSTRAINT fk_encounter_identifier_assigner FOREIGN KEY (assigner_id) REFERENCES organisation(id)
 );
 
-CREATE TABLE encounter_class ( -- Classification of patient encounter context - e.g. Inpatient, outpatient,virtual,home health
-    id        VARCHAR(64) NOT NULL PRIMARY KEY, --  it can change from one to other, tele + field visit
-    encounter_id VARCHAR(64) NOT NULL,
-    `code`      VARCHAR(50),
-    
-    CONSTRAINT fk_encounter_class_encounter FOREIGN KEY (encounter_id) REFERENCES encounter(id)
-);
-
 CREATE TABLE encounter_type ( -- Multiple services were provided during that one visit.
-    id        VARCHAR(64) NOT NULL PRIMARY KEY,
+    id        VARCHAR(64) NOT NULL PRIMARY KEY, -- A patient has an encounter that involves both a cardiology consultation and a diagnostic imaging session.
     encounter_id VARCHAR(64) NOT NULL,
     `code`      VARCHAR(50),
 
@@ -90,7 +122,7 @@ CREATE TABLE encounter_episode_of_care ( -- This hospital visit (encounter) is p
 );
 
 CREATE TABLE encounter_based_on ( -- Why did this encounter happen? ServiceRequest
-    id           VARCHAR(64) PRIMARY KEY,
+    id           VARCHAR(64) PRIMARY KEY, -- One Encounter can be based on multiple requests (e.g., lab request + appointment + referral
     encounter_id VARCHAR(64) NOT NULL,
     target_type  VARCHAR(64) NOT NULL,
     target_id    VARCHAR(64) NOT NULL,
@@ -174,7 +206,7 @@ CREATE TABLE encounter_account ( -- the billing accounts associated with the enc
     PRIMARY KEY (encounter_id, account_id),
 
     CONSTRAINT fk_encounter_account_encounter FOREIGN KEY (encounter_id) REFERENCES encounter(id),
-    CONSTRAINT fk_encounter_account_account FOREIGN KEY (account_id) REFERENCES account(id)
+    CONSTRAINT fk_encounter_account_account FOREIGN KEY (account_id) REFERENCES `account`(id)
 );
 
 CREATE TABLE encounter_diet_preference ( -- 	Diet preferences reported by the patient like vegetarian
