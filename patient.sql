@@ -16,7 +16,7 @@ CREATE TABLE practitioner (
     birth_date DATE,
     phone VARCHAR(50),
     email VARCHAR(100),
-    active BOOLEAN DEFAULT TRUE
+    `active` BOOLEAN DEFAULT TRUE
 ); -- 15 tables
 
 -- Organization Table
@@ -30,22 +30,36 @@ CREATE TABLE organisation (
     active      BOOLEAN DEFAULT TRUE
 );
 
+--  attachment where abha card will be saved 
+CREATE TABLE attachment (
+    id              INT AUTO_INCREMENT PRIMARY KEY,  -- Unique ID for attachment
+    content_type    VARCHAR(64) NOT NULL,            -- MIME type, e.g., 'image/jpeg'
+    url             TEXT,                            -- URL if stored externally
+    `data`          MEDIUMBLOB,                        -- Inline binary data (photo)
+    title           VARCHAR(128),                    -- Title of the attachment
+	size            INT,                             -- File size in bytes
+    `hash`          VARBINARY(20),                   -- SHA-1 hash (20 bytes)
+    creation_date   DATETIME                         -- Timestamp of creation
+);
+
 
 -- Patient Table ---
 CREATE TABLE patient (
-    id                      VARCHAR(64)     NOT NULL PRIMARY KEY,   -- FHIR resource id (UUID or similar)
-    active                  BOOLEAN         NOT NULL,               -- active status of the patient record (FHIR: active)
-    gender                  varchar(32) NOT NULL,                                 -- Administrative gender (FHIR: gender) M,F
+    id                       VARCHAR(64)     NOT NULL PRIMARY KEY,   -- FHIR resource id (UUID or similar)
+    active                   BOOLEAN         NOT NULL,               -- active status of the patient record (FHIR: active)
+    gender                   VARCHAR(32) NOT NULL,                                 -- Administrative gender (FHIR: gender) M,F
     birth_date               DATE,                                       -- Date of birth (FHIR: birthDate)
     
     deceased_boolean         BOOLEAN,                                    -- True if patient is deceased (FHIR: deceasedBoolean)
     deceased_dateTime        DATETIME,                                   -- DateTime of death, if known (FHIR: deceasedDateTime)
     
-    marital_status_code     varchar(32),                                -- Marital status code (FHIR: maritalStatus coding)
+    marital_status_code       VARCHAR(32),                                -- Marital status code (FHIR: maritalStatus coding)
     multiple_birth_boolean    BOOLEAN,                                    -- True if part of multiple birth (FHIR: multipleBirthBoolean)
     multiple_birth_integer    INT,                                        -- Birth order if multiple birth (FHIR: multipleBirthInteger)
     
-    managing_organization_id VARCHAR(64),                                -- FK to Organization(id); custodian organization
+    photo  INT UNIQUE,
+    managing_organization_id VARCHAR(64),-- FK to Organization(id); custodian organization
+	CONSTRAINT fk_patient_attachment FOREIGN KEY (photo) REFERENCES attachment(id),
     CONSTRAINT fk_patient_org FOREIGN KEY (managing_organization_id) REFERENCES organisation(id)
 );
 
@@ -64,18 +78,6 @@ CREATE TABLE patient_identifier (
     CONSTRAINT fk_identifier_patient FOREIGN KEY (patient_id) REFERENCES patient(id),
 	CONSTRAINT fk_patient_identifier_attachment FOREIGN KEY (photo_attachment_id) REFERENCES attachment(id),
 	CONSTRAINT fk_patient_identifier_assigner FOREIGN KEY (assigner_id) REFERENCES organisation(id)
-);
-
---  attachment where abha card will be saved 
-CREATE TABLE attachment (
-    id              INT AUTO_INCREMENT PRIMARY KEY,  -- Unique ID for attachment
-    content_type    VARCHAR(64) NOT NULL,            -- MIME type, e.g., 'image/jpeg'
-    url             TEXT,                            -- URL if stored externally
-    `data`          MEDIUMBLOB,                        -- Inline binary data (photo)
-    title           VARCHAR(128),                    -- Title of the attachment
-	size            INT,                             -- File size in bytes
-    `hash`          VARBINARY(20),                   -- SHA-1 hash (20 bytes)
-    creation_date   DATETIME                         -- Timestamp of creation
 );
 
 
