@@ -1,15 +1,15 @@
 -- Patient General Practitioner Table
-CREATE TABLE general_practitioner ( -- for referncing purpose only not permananent
+CREATE TABLE insaights_general_practitioner ( -- for referncing purpose only not permananent
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), -- can reference to many practitioner
     
     organisation_id VARCHAR(64),
     practitioner_id VARCHAR(64),
     practitioner_role_id VARCHAR(64),
 	patient_id      VARCHAR(64),
-    CONSTRAINT fk_prac_patient FOREIGN KEY (patient_id) REFERENCES patient(id),
-	CONSTRAINT fk_org_patient FOREIGN KEY (organisation_id) REFERENCES organisation(id),
-    CONSTRAINT fk_org_patient_role FOREIGN KEY (practitioner_role_id) REFERENCES practitioner_role(id),
-    CONSTRAINT fk_practitioner FOREIGN KEY (practitioner_id) REFERENCES practitioner(id),
+    CONSTRAINT fk_prac_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
+	CONSTRAINT fk_org_patient FOREIGN KEY (organisation_id) REFERENCES insaights_organisation(id),
+    CONSTRAINT fk_org_patient_role FOREIGN KEY (practitioner_role_id) REFERENCES insaights_practitioner_role(id),
+    CONSTRAINT fk_practitioner FOREIGN KEY (practitioner_id) REFERENCES insaights_practitioner(id),
     
     CONSTRAINT chk_only_one_reference CHECK (
 		(practitioner_id IS NOT NULL AND organisation_id IS NULL AND practitioner_role_id IS NULL) OR
@@ -19,7 +19,7 @@ CREATE TABLE general_practitioner ( -- for referncing purpose only not permanane
 );
 
 -- Practitioner Table
-CREATE TABLE practitioner (
+CREATE TABLE insaights_practitioner (
   	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), 
     given_name VARCHAR(100),
     family_name VARCHAR(100),
@@ -31,7 +31,7 @@ CREATE TABLE practitioner (
 ); 
 
 -- Organization Table
-CREATE TABLE organisation (
+CREATE TABLE insaights_organisation (
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), 
     `name`        VARCHAR(255) NOT NULL,
     `type`        VARCHAR(128),
@@ -42,7 +42,7 @@ CREATE TABLE organisation (
 );
 
 -- PractitionerRole Table
-CREATE TABLE practitioner_role (
+CREATE TABLE insaights_practitioner_role (
   	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), 
     practitioner_id     VARCHAR(64),                        -- Reference to Practitioner
     organization_id     VARCHAR(64),                        -- Reference to Organization
@@ -56,7 +56,7 @@ CREATE TABLE practitioner_role (
     notes               TEXT                                -- Any additional notes
 );
 
-CREATE TABLE related_person (
+CREATE TABLE insaights_related_person (
   id                  VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),  -- Unique FHIR resource ID
   patient_id          VARCHAR(64) NOT NULL,                      -- Reference to Patient
   name_text           VARCHAR(128),                              -- Full name
@@ -70,11 +70,11 @@ CREATE TABLE related_person (
   period_end          DATE,                                      -- Valid until
   created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,        -- Record creation timestamp
 
-  CONSTRAINT fk_related_person_patient FOREIGN KEY (patient_id) REFERENCES patient(id)
+  CONSTRAINT fk_related_person_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
 --  attachment where abha card will be saved 
-CREATE TABLE attachment ( -- patient photo and other pictures are stored
+CREATE TABLE insaights_attachment ( -- patient photo and other pictures are stored
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),  	 -- Unique ID for attachment
     content_type    VARCHAR(64) NOT NULL,            -- MIME type, e.g., 'image/jpeg'
     `language`      VARCHAR(32),                     -- what language a pdf is written codeable concept
@@ -87,7 +87,7 @@ CREATE TABLE attachment ( -- patient photo and other pictures are stored
 );
 
 -- Patient Table ---
-CREATE TABLE patient (
+CREATE TABLE insaights_patient (
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),   -- FHIR resource id (UUID or similar)
     
     -- human name table flattened
@@ -96,7 +96,7 @@ CREATE TABLE patient (
     middle_name              VARCHAR(50),        -- FHIR: HumanName.given[1] (optional)
     last_name                VARCHAR(100),       -- FHIR: HumanName.family
     name_suffix              VARCHAR(50),        -- FHIR: HumanName.suffix (e.g., 'PhD')
-    name_text                VARCHAR(200),       -- FHIR: HumanName.text (full display name)
+    full_name                VARCHAR(200),       -- FHIR: HumanName.text (full display name)
     
     `active`                 BOOLEAN         NOT NULL,               -- active status of the patient record (FHIR: active) important for interpretation
     
@@ -115,12 +115,12 @@ CREATE TABLE patient (
 	created_at               DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- Creation timestamp
     
     managing_organization_id VARCHAR(64) ,-- FK to Organization(id); custodian organization
-	CONSTRAINT fk_patient_attachment FOREIGN KEY (photo) REFERENCES attachment(id),
-    CONSTRAINT fk_patient_org FOREIGN KEY (managing_organization_id) REFERENCES organisation(id)
+	CONSTRAINT fk_patient_attachment FOREIGN KEY (photo) REFERENCES insaights_attachment(id),
+    CONSTRAINT fk_patient_org FOREIGN KEY (managing_organization_id) REFERENCES insaights_organisation(id)
 );
 
 -- Patient Identifier Table
-CREATE TABLE identifier ( -- must strong participation
+CREATE TABLE insaights_identifier ( -- must strong participation
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), 
     `use`         VARCHAR(32),                        -- Identifier use (official, usual, etc.)
     type_code     VARCHAR(32),                        -- Identifier type code (FHIR: Identifier.type coding) 	Driver's license number
@@ -133,13 +133,13 @@ CREATE TABLE identifier ( -- must strong participation
     
     -- PRIMARY KEY (patient_id, `system`, `value`),     -- Composite PK ensures uniqueness per system+value
 	patient_id    VARCHAR(64) NOT NULL,              -- FK to Patient(id)
-    CONSTRAINT fk_identifier_patient FOREIGN KEY (patient_id) REFERENCES patient(id),
-	CONSTRAINT fk_patient_identifier_attachment FOREIGN KEY (photo_attachment_id) REFERENCES attachment(id),
-	CONSTRAINT fk_patient_identifier_assigner FOREIGN KEY (assigner_id) REFERENCES organisation(id)
+    CONSTRAINT fk_identifier_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
+	CONSTRAINT fk_patient_identifier_attachment FOREIGN KEY (photo_attachment_id) REFERENCES insaights_attachment(id),
+	CONSTRAINT fk_patient_identifier_assigner FOREIGN KEY (assigner_id) REFERENCES insaights_organisation(id)
 );
 
 -- A contact detail for the individual patient
-CREATE TABLE telecom (
+CREATE TABLE insaights_telecom (
   id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
   `system`    VARCHAR(32), -- phone, email
   `value`      VARCHAR(100), -- actual address like ohone number
@@ -149,11 +149,11 @@ CREATE TABLE telecom (
   period_end   DATE,
   
   patient_id   VARCHAR(64),
-  CONSTRAINT fk_telecom_patient FOREIGN KEY (patient_id) REFERENCES patient(id)
+  CONSTRAINT fk_telecom_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
 -- Patient Address Table
-CREATE TABLE address (
+CREATE TABLE insaights_address (
   id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
   `use`          VARCHAR(32), -- ('home','work','temp','old','billing')
   `type`         VARCHAR(32), -- ('postal','physical','both'),
@@ -169,11 +169,11 @@ CREATE TABLE address (
   period_end   DATE,
   
   patient_id   VARCHAR(64),
-  CONSTRAINT fk_address_patient FOREIGN KEY (patient_id) REFERENCES patient(id)
+  CONSTRAINT fk_address_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
 -- Patient Contact Table
-CREATE TABLE contact ( -- can have multiple person for contacts
+CREATE TABLE insaights_contact ( -- can have multiple person for contacts
   id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
   
   name_prefix              VARCHAR(50),        -- FHIR: HumanName.prefix (e.g., 'Dr.')
@@ -189,21 +189,21 @@ CREATE TABLE contact ( -- can have multiple person for contacts
   period_end      DATE,
   
   patient_id      VARCHAR(64) ,
-  CONSTRAINT fk_contact_patient FOREIGN KEY (patient_id) REFERENCES patient(id),
-  CONSTRAINT fk_contact_org FOREIGN KEY (organization_id) REFERENCES organisation(id)
+  CONSTRAINT fk_contact_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
+  CONSTRAINT fk_contact_org FOREIGN KEY (organization_id) REFERENCES insaights_organisation(id)
 );
 
 -- Patient Contact Relationship Table
-CREATE TABLE contact_relationship ( --  same person can be employer and billing person
+CREATE TABLE insaights_contact_relationship ( --  same person can be employer and billing person
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     relationship_code      VARCHAR(32) NOT NULL,
     
 	contact_id  		   VARCHAR(64),
-    CONSTRAINT fk_crel_contact FOREIGN KEY (contact_id) REFERENCES contact(id)
+    CONSTRAINT fk_crel_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
 -- Patient Contact Telecom Table
-CREATE TABLE contact_telecom ( -- can have mutiple communication modes
+CREATE TABLE insaights_contact_telecom ( -- can have mutiple communication modes
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     
     `system`    VARCHAR(32), -- ('phone','fax','email','pager','url','sms','other'),
@@ -214,11 +214,11 @@ CREATE TABLE contact_telecom ( -- can have mutiple communication modes
     period_end   DATE,
     
     contact_id  VARCHAR(64),
-    CONSTRAINT fk_ctelecom_contact FOREIGN KEY (contact_id) REFERENCES contact(id)
+    CONSTRAINT fk_ctelecom_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
 -- Patient Contact Address Table
-CREATE TABLE contact_address ( -- can have multiple address,homes of contact person
+CREATE TABLE insaights_contact_address ( -- can have multiple address,homes of contact person
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
   
     `use`       VARCHAR(32),  -- ('home','work','temp','old','billing'),
@@ -235,21 +235,21 @@ CREATE TABLE contact_address ( -- can have multiple address,homes of contact per
     period_end   DATE,
     
 	contact_id  VARCHAR(64),
-    CONSTRAINT fk_caddr_contact FOREIGN KEY (contact_id) REFERENCES contact(id)
+    CONSTRAINT fk_caddr_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
 -- Patient Communication Table
-CREATE TABLE communication ( -- a patient can prefer multiple languages which he may prefer
+CREATE TABLE insaights_communication ( -- a patient can prefer multiple languages which he may prefer
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     patient_id      VARCHAR(64),
     language_code   VARCHAR(32) NOT NULL,
     preferred       BOOLEAN DEFAULT FALSE,
-    CONSTRAINT fk_comm_patient FOREIGN KEY (patient_id) REFERENCES patient(id)
+    CONSTRAINT fk_comm_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
 
 -- Patient Link Table
-CREATE TABLE patient_link (
+CREATE TABLE insaights_patient_link (
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     other_patient_id  VARCHAR(64),                  -- optional: linked patient
     related_person_id VARCHAR(64),                  -- optional: linked related person
@@ -258,14 +258,13 @@ CREATE TABLE patient_link (
 	patient_id        VARCHAR(64) NOT NULL, -- main patient linked
     
 	CONSTRAINT    UNIQUE(patient_id, type),
-    CONSTRAINT fk_link_patient          FOREIGN KEY (patient_id) REFERENCES patient(id),
-    CONSTRAINT fk_link_other_patient    FOREIGN KEY (other_patient_id) REFERENCES patient(id),
-    CONSTRAINT fk_link_related_person   FOREIGN KEY (related_person_id) REFERENCES related_person(id),
+    CONSTRAINT fk_link_patient          FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
+    CONSTRAINT fk_link_other_patient    FOREIGN KEY (other_patient_id) REFERENCES insaights_patient(id),
+    CONSTRAINT fk_link_related_person   FOREIGN KEY (related_person_id) REFERENCES insaights_related_person(id),
     
     CONSTRAINT CHECK (
 		(other_patient_id IS NOT NULL AND related_person_id IS NULL)
 		OR
 		(other_patient_id IS NULL AND related_person_id IS NOT NULL)
 	)
-
 );
