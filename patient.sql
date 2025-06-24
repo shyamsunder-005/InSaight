@@ -1,22 +1,7 @@
--- Patient General Practitioner Table
-CREATE TABLE insaights_general_practitioner ( -- for referncing purpose only not permananent
-    id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), -- can reference to many practitioner
-    
-    organisation_id VARCHAR(64),
-    practitioner_id VARCHAR(64),
-    practitioner_role_id VARCHAR(64),
-	patient_id      VARCHAR(64),
-    CONSTRAINT fk_prac_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
-	CONSTRAINT fk_org_patient FOREIGN KEY (organisation_id) REFERENCES insaights_organisation(id),
-    CONSTRAINT fk_org_patient_role FOREIGN KEY (practitioner_role_id) REFERENCES insaights_practitioner_role(id),
-    CONSTRAINT fk_practitioner FOREIGN KEY (practitioner_id) REFERENCES insaights_practitioner(id),
-    
-    CONSTRAINT chk_only_one_reference CHECK (
-		(practitioner_id IS NOT NULL AND organisation_id IS NULL AND practitioner_role_id IS NULL) OR
-		(practitioner_id IS NULL AND organisation_id IS NOT NULL AND practitioner_role_id IS NULL) OR
-		(practitioner_id IS NULL AND organisation_id IS NULL AND practitioner_role_id IS NOT NULL)
-	)
-);
+create database insaights_db;
+use insaights_db;
+drop database insaights_db;
+-- 16 tables total
 
 -- Practitioner Table
 CREATE TABLE insaights_practitioner (
@@ -56,6 +41,28 @@ CREATE TABLE insaights_practitioner_role (
     notes               TEXT                                -- Any additional notes
 );
 
+
+-- Patient General Practitioner Table
+CREATE TABLE insaights_general_practitioner ( -- for referncing purpose only not permananent
+    id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()), -- can reference to many practitioner
+    
+    organisation_id VARCHAR(64),
+    practitioner_id VARCHAR(64),
+    practitioner_role_id VARCHAR(64),
+	patient_id      VARCHAR(64) NOT NULL,
+    CONSTRAINT fk_prac_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
+	CONSTRAINT fk_org_patient FOREIGN KEY (organisation_id) REFERENCES insaights_organisation(id),
+    CONSTRAINT fk_org_patient_role FOREIGN KEY (practitioner_role_id) REFERENCES insaights_practitioner_role(id),
+    CONSTRAINT fk_practitioner FOREIGN KEY (practitioner_id) REFERENCES insaights_practitioner(id),
+    
+    CONSTRAINT chk_only_one_reference CHECK (
+		(practitioner_id IS NOT NULL AND organisation_id IS NULL AND practitioner_role_id IS NULL) OR
+		(practitioner_id IS NULL AND organisation_id IS NOT NULL AND practitioner_role_id IS NULL) OR
+		(practitioner_id IS NULL AND organisation_id IS NULL AND practitioner_role_id IS NOT NULL)
+	)
+);
+
+
 CREATE TABLE insaights_related_person (
   id                  VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),  -- Unique FHIR resource ID
   patient_id          VARCHAR(64) NOT NULL,                      -- Reference to Patient
@@ -65,7 +72,7 @@ CREATE TABLE insaights_related_person (
   birth_date          DATE,                                      -- Date of birth
   telecom             VARCHAR(128),                              -- Contact (phone/email)
   address             TEXT,                                      -- Address
-  active              BOOLEAN DEFAULT TRUE,                      -- Whether this record is active
+  `active`              BOOLEAN DEFAULT TRUE,                      -- Whether this record is active
   period_start        DATE,                                      -- Valid from
   period_end          DATE,                                      -- Valid until
   created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,        -- Record creation timestamp
@@ -76,7 +83,7 @@ CREATE TABLE insaights_related_person (
 --  attachment where abha card will be saved 
 CREATE TABLE insaights_attachment ( -- patient photo and other pictures are stored
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),  	 -- Unique ID for attachment
-    content_type    VARCHAR(64) NOT NULL,            -- MIME type, e.g., 'image/jpeg'
+    content_type    VARCHAR(64),            -- MIME type, e.g., 'image/jpeg'
     `language`      VARCHAR(32),                     -- what language a pdf is written codeable concept
     url             TEXT,                            -- URL if stored externally
     `data`          MEDIUMBLOB,                        -- Inline binary data (photo)
@@ -98,9 +105,9 @@ CREATE TABLE insaights_patient (
     name_suffix              VARCHAR(50),        -- FHIR: HumanName.suffix (e.g., 'PhD')
     full_name                VARCHAR(200),       -- FHIR: HumanName.text (full display name)
     
-    `active`                 BOOLEAN         NOT NULL,               -- active status of the patient record (FHIR: active) important for interpretation
+    `active`                 BOOLEAN,               -- active status of the patient record (FHIR: active) important for interpretation
     
-    gender                   VARCHAR(32) NOT NULL,                    -- Administrative gender (FHIR: gender) M,F
+    gender                   VARCHAR(32),                    -- Administrative gender (FHIR: gender) M,F
     birth_date               DATE,                                    -- Date of birth (FHIR: birthDate)
     
     deceased_boolean         BOOLEAN,                                 -- True if patient is deceased (FHIR: deceasedBoolean)important for interpretation
@@ -112,6 +119,9 @@ CREATE TABLE insaights_patient (
     multiple_birth_integer   INT,                                    -- Birth order if multiple birth (FHIR: multipleBirthInteger)
     
     photo  					 VARCHAR(64),							  -- photo_id
+    religion				 VARCHAR(32),                              -- for storing reliigion special case
+    annual_income			 INT,										-- for storing annual income
+    nationality				 VARCHAR(32),								-- for nationality
 	created_at               DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- Creation timestamp
     
     managing_organization_id VARCHAR(64) ,-- FK to Organization(id); custodian organization
@@ -125,7 +135,7 @@ CREATE TABLE insaights_identifier ( -- must strong participation
     `use`         VARCHAR(32),                        -- Identifier use (official, usual, etc.)
     type_code     VARCHAR(32),                        -- Identifier type code (FHIR: Identifier.type coding) 	Driver's license number
     `system`      VARCHAR(128),                       -- Namespace for identifier (URI or OID)
-    `value`       VARCHAR(128) NOT NULL,              -- Identifier value
+    `value`       VARCHAR(128),              -- Identifier value
     period_start  DATE,                               -- Identifier valid period start
     period_end    DATE,                               -- Identifier valid period end
 	photo_attachment_id   VARCHAR(64),                -- FK to Attachment(id), 1 photo per identifier
@@ -148,7 +158,7 @@ CREATE TABLE insaights_telecom (
   period_start DATE,
   period_end   DATE,
   
-  patient_id   VARCHAR(64),
+  patient_id   VARCHAR(64) NOT NULL,
   CONSTRAINT fk_telecom_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
@@ -168,7 +178,7 @@ CREATE TABLE insaights_address (
   period_start DATE,
   period_end   DATE,
   
-  patient_id   VARCHAR(64),
+  patient_id   VARCHAR(64) NOT NULL,
   CONSTRAINT fk_address_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
 );
 
@@ -188,7 +198,7 @@ CREATE TABLE insaights_contact ( -- can have multiple person for contacts
   period_start    DATE,
   period_end      DATE,
   
-  patient_id      VARCHAR(64) ,
+  patient_id      VARCHAR(64) NOT NULL,
   CONSTRAINT fk_contact_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id),
   CONSTRAINT fk_contact_org FOREIGN KEY (organization_id) REFERENCES insaights_organisation(id)
 );
@@ -196,9 +206,9 @@ CREATE TABLE insaights_contact ( -- can have multiple person for contacts
 -- Patient Contact Relationship Table
 CREATE TABLE insaights_contact_relationship ( --  same person can be employer and billing person
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
-    relationship_code      VARCHAR(32) NOT NULL,
+    relationship_code      VARCHAR(32),
     
-	contact_id  		   VARCHAR(64),
+	contact_id  		   VARCHAR(64) NOT NULL,
     CONSTRAINT fk_crel_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
@@ -207,13 +217,13 @@ CREATE TABLE insaights_contact_telecom ( -- can have mutiple communication modes
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     
     `system`    VARCHAR(32), -- ('phone','fax','email','pager','url','sms','other'),
-    `value`     VARCHAR(128) NOT NULL, -- real value
+    `value`     VARCHAR(128), -- real value
     `use`       VARCHAR(32),  -- ('home','work','temp','old','mobile'),
     `rank`      INT UNSIGNED, -- which is of highest priority
     period_start DATE,
     period_end   DATE,
     
-    contact_id  VARCHAR(64),
+    contact_id  VARCHAR(64) NOT NULL,
     CONSTRAINT fk_ctelecom_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
@@ -234,14 +244,14 @@ CREATE TABLE insaights_contact_address ( -- can have multiple address,homes of c
     period_start DATE,
     period_end   DATE,
     
-	contact_id  VARCHAR(64),
+	contact_id  VARCHAR(64) NOT NULL UNIQUE,
     CONSTRAINT fk_caddr_contact FOREIGN KEY (contact_id) REFERENCES insaights_contact(id)
 );
 
 -- Patient Communication Table
 CREATE TABLE insaights_communication ( -- a patient can prefer multiple languages which he may prefer
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
-    patient_id      VARCHAR(64),
+    patient_id      VARCHAR(64) NOT NULL,
     language_code   VARCHAR(32) NOT NULL,
     preferred       BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_comm_patient FOREIGN KEY (patient_id) REFERENCES insaights_patient(id)
