@@ -98,7 +98,7 @@ CREATE TABLE insaights_patient (
 	id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),   -- FHIR resource id (UUID or similar)
     
     -- human name table flattened
-	name_prefix              VARCHAR(50),        -- FHIR: HumanName.prefix (e.g., 'Dr.')
+	name_prefix              VARCHAR(50),        -- FHIR: HumanName.prefix (e.g., 'Dr.')    
     first_name               VARCHAR(50),        -- FHIR: HumanName.given[0]
     middle_name              VARCHAR(50),        -- FHIR: HumanName.given[1] (optional)
     last_name                VARCHAR(100),       -- FHIR: HumanName.family
