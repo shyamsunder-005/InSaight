@@ -69,6 +69,23 @@ CREATE TABLE insaights_encounter (
     CONSTRAINT fk_encounter_service_provider FOREIGN KEY (service_provider_org_id) REFERENCES insaights_organisation(id)
 );
 
+-- Add created_at column to track when the encounter was created
+ALTER TABLE insaights_encounter
+ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- Add created_by column to track who created the encounter
+ALTER TABLE insaights_encounter
+ADD COLUMN created_by VARCHAR(64);
+
+-- Add modified_at column to track when the encounter was last modified
+ALTER TABLE insaights_encounter
+ADD COLUMN modified_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+-- Add modified_by column to track who last modified the encounter
+ALTER TABLE insaights_encounter
+ADD COLUMN modified_by VARCHAR(64);
+
+
 CREATE TABLE insaights_encounter_identifier ( -- Medical record number ,insurance
     id VARCHAR(64) PRIMARY KEY DEFAULT (UUID()),
     encounter_id        VARCHAR(64) NOT NULL, --  references to base table encounter
@@ -220,10 +237,31 @@ CREATE TABLE insaights_encounter_location ( -- tracks where a patient was during
     encounter_id  VARCHAR(64) NOT NULL,
     location_id   VARCHAR(64) NOT NULL,
     `status`        VARCHAR(20),
-    form_code     VARCHAR(32),
+    form_code     VARCHAR(32),-- room ward
 	room_tel_num        VARCHAR(16),
     period_start  DATETIME,
     period_end    DATETIME,
     CONSTRAINT fk_encounter_location_encounter FOREIGN KEY (encounter_id) REFERENCES insaights_encounter(id),
     CONSTRAINT fk_encounter_location_location FOREIGN KEY (location_id) REFERENCES insaights_location(id)
 );
+
+ALTER TABLE insaights_encounter_location -- execute
+  ADD COLUMN room_type_code       VARCHAR(32),
+  ADD COLUMN room_number          VARCHAR(32),
+  ADD COLUMN bed_number           VARCHAR(32); -- from clinical repository of encounter
+  
+  
+CREATE TABLE insaights_encounter_police_report ( -- from cr
+  encounter_id         VARCHAR(64) NOT NULL PRIMARY KEY REFERENCES insaights_encounter(id),
+  pol_rep_no           VARCHAR(64), -- report no
+  pol_stn_id           VARCHAR(64),
+  pol_id               VARCHAR(64),
+  informed_to          VARCHAR(64),
+  informed_name        VARCHAR(64),
+  informed_date_time   DATETIME,
+  post_mortem_req_yn   CHAR(1) -- 'Y' or 'N'
+);
+
+
+
+
