@@ -12,10 +12,10 @@ InSaight is a comprehensive repository for managing and modeling healthcare data
 
 | File/Folder                    | Description                                      |
 |--------------------------------|--------------------------------------------------|
-| `Patient_resource.json`        | FHIR-compliant Patient resource example           |
-| `Encounter_resource.json`      | FHIR-compliant Encounter resource example         |
-| `patient.sql`                  | SQL schema for Patient and related tables         |
-| `encounter.sql`                | SQL schema for Encounter and related tables       |
+| `fhir_resources/MongoDB/Patient_resource.json`        | FHIR-compliant Patient resource example           |
+| `fhir_resources/MongoDB/Encounter_resource.json`      | FHIR-compliant Encounter resource example         |
+| `fhir_resources/MySql/patient.sql`                  | SQL schema for Patient and related tables         |
+| `fhir_resources/MySql/encounter.sql`                | SQL schema for Encounter and related tables       |
 
 ## Getting Started
 1. **Clone the Repository:**
