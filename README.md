@@ -16,6 +16,8 @@ InSaight is a comprehensive repository for managing and modeling healthcare data
 | `fhir_resources/MongoDB/Encounter_resource.json`      | FHIR-compliant Encounter resource example         |
 | `fhir_resources/MySql/patient.sql`                  | SQL schema for Patient and related tables         |
 | `fhir_resources/MySql/encounter.sql`                | SQL schema for Encounter and related tables       |
+| `fhir_resources/PostgreSql/patient.sql`                | SQL schema for Patient and related tables using PostgreSQL       |
+| `fhir_resources/PostgreSql/encounter.sql`                | SQL schema for Encounter and related tables using PostgreSQL      |
 
 ## Getting Started
 1. **Clone the Repository:**
